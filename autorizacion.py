@@ -1,11 +1,10 @@
-from pypuf.simulation import XORArbiterPUF
+from pypuf.simulation import XORBistableRingPUF
 from pypuf.io import random_inputs
+from numpy.random import default_rng
 from Crypto.Hash import SHA3_256
 import random
 
 def main():
-
-	
 
 	# Número de respuestas totales
 	N = 1000
@@ -19,7 +18,9 @@ def main():
 	
 
 	# Creamos PUF
-	puf = XORArbiterPUF(n=64, k=8, seed=2, noisiness=.0)
+	k, n = 8, 64
+	weights = default_rng(1).normal(size=(k, n+1))
+	puf = XORBistableRingPUF(n=64, k=8,  weights=weights)
 
 	try:
 		# Leemos los hashes y los guardamos en realHashes
@@ -27,7 +28,7 @@ def main():
 		with open('BBDD_CRPs.txt', 'r') as f:
 			realHashes = f.readlines()
 	except:
-		# Recoge excepción FileNotFoundError: [Errno 2] No such file or directory: 'BBDD_CRPs.txt'
+		# Recoge excepción FileNotFoundError
 		# Si no existe el fichero significa que no esta emparejado, devolvemos un 2
 		exit(2)
 
@@ -55,7 +56,7 @@ def main():
 			# authized a 1 (no autorizado)
 			authorized = 1
 
-	exit(authorized)
+	return authorized
 
 	
 #Change every bit of the array to be a string,
@@ -63,7 +64,3 @@ def main():
 def transform_array(bit):
     return str(bit) if bit==1 else "0"
 
-
-# Start process
-if __name__ == '__main__':
-    main()

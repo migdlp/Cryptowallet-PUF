@@ -1,7 +1,8 @@
-#!/usr/bin/env python
 import subprocess
 import sys
-
+import autorizacion
+import emparejamiento
+import cifrador_AES_PUF
 
 if __name__ == '__main__':
    
@@ -25,7 +26,8 @@ if __name__ == '__main__':
             exit()
 
         # Mira si el dispositivo esta autorizado (0: autorizado, 1: no autorizado, 2: no se ha emparejado)
-        authorized = subprocess.call("autorizacion.py", shell=True) 
+        print("\n\tAutorizando...")
+        authorized = autorizacion.main()
         
         # Si no está emparejado terminamos el programa
         if (authorized == 2):
@@ -41,7 +43,9 @@ if __name__ == '__main__':
        
         # Esta autorizado
         if (authorized == 0):
-   
+
+            print("\n\tEsta autorizado. ")
+
             # Mira si se ha creado un archivo de texto con el nombre de la cartera
             # -> Si no para el programa y devuelve "No existe ninguna cartera con ese nombre"
             try:
@@ -52,7 +56,8 @@ if __name__ == '__main__':
 
             # LLama al módulo de cifrado/descifrado
             # devuelva por pantalla la llave de la cartera descifrada
-            subprocess.call("cifrador_AES_PUF.py " + walletName, shell=True)
+            key = cifrador_AES_PUF.PUFDecipher(walletName)
+            print("\n\tSu llave es: " + key)
             
 
 
@@ -78,14 +83,14 @@ if __name__ == '__main__':
             exit()
 
         # Mira si el dispositivo esta autorizado (0: autorizado, 1: no autorizado, 2: no se ha emparejado)
-        authorized = subprocess.call("autorizacion.py", shell=True) 
+        print("\n\tAutorizando... ")
+        authorized = autorizacion.main()
 
         # Si no está emparejado, lo emparejamos
         if (authorized == 2):
-            
-            print("\n\tEmparejando... ")
-            authorized = subprocess.call("emparejamiento.py", shell=True)
-
+            print("\n\tEl Dispositivo no se ha emparejado nunca.")
+            print("\tEmparejando... ")
+            emparejamiento.main()
         # No está autorizado
         if (authorized == 1):
             # Terminamos el programa
@@ -99,7 +104,7 @@ if __name__ == '__main__':
         
         # Si se acaba de emparejar o está autorizado:
         # cifra y almacena la llave de la cartera
-        subprocess.call("cifrador_AES_PUF.py " + walletKey + " " + walletName, shell=True)
+        cifrador_AES_PUF.PUFCipher(walletName, walletKey)
         print("\n\tSu llave se ha guardado correctamente en la cartera " + walletName)   
 
 
@@ -107,7 +112,10 @@ if __name__ == '__main__':
 
     # No se ha introducido correctamente el primer parametro (action)
     else:
-        print("\n\tEl primer argumento debe ser \"get\" o \"set\"")
+        print("\n\tManual:")
+        print("\n\tIntroduzca \"set <llave_privada> <nombre_cartera>\" para emparejarse si es su primera vez. ")
+        print("\tSi no es su primera vez se autorizara.\n\tPuede crear tantas carteras como quiera con si les da distintos nombres.")
+        print("\n\tIntroduzca \"get <nombre_cartera>\" para autorizarse y recuperar la <llave_privada> de su cartera ")
         exit()
 
     
