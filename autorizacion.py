@@ -30,7 +30,8 @@ def main():
 	except:
 		# Recoge excepción FileNotFoundError
 		# Si no existe el fichero significa que no esta emparejado, devolvemos un 2
-		exit(2)
+		authorized = 2
+		return authorized
 
 	# Inicializamos autorized a 0 (autorizado )
 	authorized = 0
