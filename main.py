@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import subprocess
 import sys
 import autorizacion
@@ -23,6 +24,15 @@ if __name__ == '__main__':
             walletName = sys.argv[2]
         else:
             print("\n\tDebe introducir el nombre de la cartera")
+            exit()
+
+        # Mira que el segundo argumento exista 
+        # ->Si no termina el programa y devuelve "Debe introducir una contraseña para la cartera"
+        if ( len(sys.argv) > 3):
+            # recoge el segundo parámetro que le pasamos al script (Contraseña de la cartera)
+            UserPassword = sys.argv[3]
+        else:
+            print("\n\tDebe introducir la contraseña de la cartera")
             exit()
 
         # Mira si el dispositivo esta autorizado (0: autorizado, 1: no autorizado, 2: no se ha emparejado)
@@ -56,7 +66,7 @@ if __name__ == '__main__':
 
             # LLama al módulo de cifrado/descifrado
             # devuelva por pantalla la llave de la cartera descifrada
-            key = cifrador_AES_PUF.PUFDecipher(walletName)
+            key = cifrador_AES_PUF.PUFDecipher(walletName, UserPassword)
             print("\n\tSu llave es: " + key)
             
 
@@ -82,6 +92,15 @@ if __name__ == '__main__':
             print("\n\tDebe introducir el nombre de la cartera")
             exit()
 
+        # Mira que el segundo argumento exista 
+        # ->Si no termina el programa y devuelve "Debe introducir una contraseña para la cartera"
+        if ( len(sys.argv) > 4):
+            # recoge el segundo parámetro que le pasamos al script (Contraseña de la cartera)
+            UserPassword = sys.argv[4]
+        else:
+            print("\n\tDebe introducir una contraseña para la cartera")
+            exit()
+
         # Mira si el dispositivo esta autorizado (0: autorizado, 1: no autorizado, 2: no se ha emparejado)
         print("\n\tAutorizando... ")
         authorized = autorizacion.main()
@@ -89,8 +108,9 @@ if __name__ == '__main__':
         # Si no está emparejado, lo emparejamos
         if (authorized == 2):
             print("\n\tEl Dispositivo no se ha emparejado nunca.")
-            print("\tEmparejando... ")
+            print("\n\tEmparejando... ")
             emparejamiento.main()
+            print("\n\tDispositivo Emparejado. ")
         # No está autorizado
         if (authorized == 1):
             # Terminamos el programa
@@ -104,18 +124,28 @@ if __name__ == '__main__':
         
         # Si se acaba de emparejar o está autorizado:
         # cifra y almacena la llave de la cartera
-        cifrador_AES_PUF.PUFCipher(walletName, walletKey)
+        cifrador_AES_PUF.PUFCipher(walletName, walletKey, UserPassword)
         print("\n\tSu llave se ha guardado correctamente en la cartera " + walletName)   
 
 
 
 
-    # No se ha introducido correctamente el primer parametro (action)
+    # No se ha introducido correctamente el primer parametro (action) muestra el Manual de Uso
     else:
-        print("\n\tManual:")
-        print("\n\tIntroduzca \"set <llave_privada> <nombre_cartera>\" para emparejarse si es su primera vez. ")
-        print("\tSi no es su primera vez se autorizara.\n\tPuede crear tantas carteras como quiera con si les da distintos nombres.")
-        print("\n\tIntroduzca \"get <nombre_cartera>\" para autorizarse y recuperar la <llave_privada> de su cartera ")
+        print("\n\tCRIPTOCARTERA SOFTWARE DE DOBLE AUTENTICACION:")
+        print("\nEsta cartera realiza un doble cifrado AES-256.\nEl primero con la contrasena que aporte el usuario\ny la segunda con un clave asociada solo a su dispositivo,\ngenerada con tecnologia PUF simulada en software.")
+        print("\nProtege tus llaves privadas con la tecnologia PUF!!\n")
+        
+        print("\n\tManual de Uso:")
+                
+        print("\nIntroduzca \"python3 main.py set <llave_privada> <nombre_cartera> <contrasena_cartera>\"\npara autorizarse o, si es su primera vez, emparejarse, y crear una nueva cartera  ")
+        print("con nombre <nombre_cartera> en la que se almacene la <llave_privada> cifrada mediante ")
+        print("la PUF simulada y la contrasena <contrasena_cartera>.")
+
+        print("\nPuede crear tantas carteras como quiera si les da distintos nombres. ")
+        print("Puede usar la misma contrasena o una diferente en cada cartera. Se recomienda usar una distinta. ")
+
+        print("\nIntroduzca \"python3 main.py get <nombre_cartera> <contrasena_cartera>\" para autorizarse\ny recuperar la <llave_privada> de su cartera.\n")
         exit()
 
     

@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
 import sys
 import os
 from pypuf.simulation import XORBistableRingPUF
 from pypuf.io import random_inputs
 from numpy.random import default_rng
 from Crypto.Cipher import AES
-
+from Crypto.Hash import SHA3_256
 
 # Encripta con la clave generada por la PUF simulada
-def PUFCipher( walletName, walletKey):
+def PUFCipher( walletName, walletKey, UserPassword):
 
     codification = 'cp1252'
 
@@ -16,37 +17,64 @@ def PUFCipher( walletName, walletKey):
     KeyInBytes = PUFKeyGenerator()
         
     # ciframos walletKey con response de la PUF en formato byte 
-    nonce, encryptedKey, tag = encrypt(KeyInBytes, walletKey.encode(codification))
+    noncePUF, encryptedWalletKeyPUF, tagPUF = encrypt(KeyInBytes, walletKey.encode(codification))
 
-    # y guardamos llave cifrada
+    # HASH del UserPassword en Bytes
+    hash_obj = SHA3_256.new(UserPassword.encode(codification))
+    UserPasswordHash = hash_obj.hexdigest()
+    UserPasswordHashBytes = bytes.fromhex(UserPasswordHash)
+
+   
+    # ciframos encryptedWalletKeyPUF con el hash de la contraseña en formato byte 
+    noncePwd, encryptedWalletKeyPUFPwd, tagPwd = encrypt(UserPasswordHashBytes, encryptedWalletKeyPUF)
+
+    # y guardamos llave cifrada 2 (encryptedWalletKeyPUFPwd) y los nonce y tags de ambos procesos de encriptación
     # No es necesario guardar challenge porque son reproducibles
     os.makedirs(os.path.dirname(directoryName), exist_ok=True)
     with open(directoryName + walletName + '.bin', 'wb') as f:
-        f.write(nonce)
-        f.write(tag)
-        f.write(encryptedKey)
-
+        f.write(noncePUF)
+        f.write(tagPUF)
+        f.write(noncePwd)
+        f.write(tagPwd)
+        f.write(encryptedWalletKeyPUFPwd)
 
 # Desencripta con la clave generada por la PUF simulada
-def PUFDecipher(walletName):
+def PUFDecipher(walletName, UserPassword):
     codification = 'cp1252'
 
     directoryName = "./BBDD_wallets/"
 
-    KeyInBytes = PUFKeyGenerator()
+    PUFKeyInBytes = PUFKeyGenerator()
     # recogemos llave cifrada y challenges del fichero
     os.makedirs(os.path.dirname(directoryName), exist_ok=True)
     with open(directoryName+ walletName + '.bin', 'rb') as f:          
-        nonce = f.readline(16)
+        noncePUF = f.readline(16)
         f.seek(16)
-        tag = f.readline(16)
+        tagPUF = f.readline(16)
         f.seek(32)
-        encryptedKey = f.readline()
+        noncePwd = f.readline(16)
+        f.seek(48)
+        tagPwd = f.readline(16)
+        f.seek(64)
+        encryptedWalletKeyPUFPwd = f.readline()
     
-    # la desciframos
-    DecryptedKey = decrypt(KeyInBytes, encryptedKey, tag, nonce)
+    # HASH del UserPassword en Bytes
+    hash_obj = SHA3_256.new(UserPassword.encode(codification))
+    UserPasswordHash = hash_obj.hexdigest()
+    UserPasswordHashBytes = bytes.fromhex(UserPasswordHash)
+    
+    # Desciframos la llave privada de la cartera
+    try:    
+        encryptedWalletKeyPUF = decrypt(UserPasswordHashBytes, encryptedWalletKeyPUFPwd, tagPwd, noncePwd)
+    except ValueError:
+        print("\n\tLa contrasena de la cartera no es correcta.\n")
+        exit()
 
-    return(DecryptedKey.decode(codification))
+    try:
+        decryptedWalletKey = decrypt(PUFKeyInBytes, encryptedWalletKeyPUF, tagPUF, noncePUF)
+        return decryptedWalletKey.decode(codification)
+    except ValueError:
+        print("\n\tEste dispositivo no esta autorizado para descifrar.\n")
 
 # Genera la clave de 256 bits mediante el simulador PUF
 def PUFKeyGenerator():

@@ -13,7 +13,7 @@ def main():
 	k, n = 8, 64
 	weights = default_rng(1).normal(size=(k, n+1))
 	puf = XORBistableRingPUF(n=64, k=8,  weights=weights)
-	print("\n\t Estas en el modulo de emparejamiento")
+
 	# creamos las N respuestas de 128bits a partir de N sets de 64 challenges de 64bits 
 	# (cada challenge da una respuesta de 1 bit, por lo que resultan respuestas de 64 bits)
 	for i in range(0 ,N ):

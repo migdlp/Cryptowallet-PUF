@@ -22,6 +22,9 @@ def main():
 	weights = default_rng(1).normal(size=(k, n+1))
 	puf = XORBistableRingPUF(n=64, k=8,  weights=weights)
 
+	# Inicializamos autorized a 0 (autorizado )
+	authorized = 0
+
 	try:
 		# Leemos los hashes y los guardamos en realHashes
 		realHashes = ""
@@ -32,9 +35,6 @@ def main():
 		# Si no existe el fichero significa que no esta emparejado, devolvemos un 2
 		authorized = 2
 		return authorized
-
-	# Inicializamos autorized a 0 (autorizado )
-	authorized = 0
 
 	# creamos los N respuestas de 128bits a partir de N challenges de 64bits
 	for i in randomChallenges:
